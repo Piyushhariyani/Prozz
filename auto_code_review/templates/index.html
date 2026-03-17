@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism — Code Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --a1:#7c3aed;
+  --a2:#2563eb;
+  --a3:#0891b2;
+  --a4:#059669;
+  --green:#10b981;
+  --red:#f43f5e;
+  --amber:#f59e0b;
+  --white:rgba(255,255,255,0.92);
+  --white2:rgba(255,255,255,0.6);
+  --white3:rgba(255,255,255,0.3);
+  --white4:rgba(255,255,255,0.1);
+  --white5:rgba(255,255,255,0.06);
+  --glass:rgba(255,255,255,0.08);
+  --glass2:rgba(255,255,255,0.13);
+  --gborder:rgba(255,255,255,0.18);
+  --gborder2:rgba(255,255,255,0.1);
+  --sans:'Plus Jakarta Sans',sans-serif;
+  --display:'Plus Jakarta Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+html{height:100%}
+
+body{
+  font-family:var(--sans);
+  min-height:100vh;
+  background:#060912;
+  color:var(--white);
+  overflow-x:hidden;
+}
+
+/* ── AURORA BG ── */
+.aurora{
+  position:fixed;inset:0;z-index:0;
+  overflow:hidden;pointer-events:none;
+}
+
+.aurora-blob{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:0.35;
+  animation:drift 18s ease-in-out infinite alternate;
+}
+
+.blob1{
+  width:700px;height:700px;
+  background:radial-gradient(circle,#7c3aed,transparent 70%);
+  top:-200px;left:-150px;
+  animation-duration:20s;
+}
+.blob2{
+  width:600px;height:600px;
+  background:radial-gradient(circle,#2563eb,transparent 70%);
+  top:10%;right:-100px;
+  animation-duration:25s;animation-delay:-8s;
+}
+.blob3{
+  width:500px;height:500px;
+  background:radial-gradient(circle,#0891b2,transparent 70%);
+  bottom:-100px;left:30%;
+  animation-duration:22s;animation-delay:-4s;
+}
+.blob4{
+  width:400px;height:400px;
+  background:radial-gradient(circle,#059669,transparent 70%);
+  bottom:20%;right:10%;
+  animation-duration:19s;animation-delay:-12s;
+}
+
+@keyframes drift{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(40px,-30px) scale(1.05)}
+  66%{transform:translate(-20px,40px) scale(0.97)}
+  100%{transform:translate(30px,20px) scale(1.03)}
+}
+
+/* ── LAYOUT ── */
+.shell{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:280px 1fr;
+  grid-template-rows:auto 1fr;
+}
+
+/* ── TOPBAR ── */
+.topbar{
+  grid-column:1/-1;
+  height:64px;
+  display:flex;align-items:center;
+  padding:0 32px;
+  border-bottom:1px solid var(--gborder2);
+  background:rgba(6,9,18,0.5);
+  backdrop-filter:blur(20px);
+  gap:0;
+}
+
+.logo{
+  display:flex;align-items:center;gap:10px;
+  text-decoration:none;
+}
+
+.logo-icon{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,#7c3aed,#2563eb);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px rgba(124,58,237,0.5);
+}
+
+.logo-icon svg{width:18px;height:18px;stroke:#fff;fill:none;}
+
+.logo-name{
+  font-size:16px;font-weight:700;
+  letter-spacing:-0.02em;color:var(--white);
+}
+
+.topbar-mid{flex:1;display:flex;justify-content:center;}
+
+.topbar-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--white4);
+  border:1px solid var(--gborder2);
+  border-radius:20px;padding:5px 14px;
+  font-family:var(--mono);font-size:11px;color:var(--white2);
+}
+
+.pulse{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  animation:pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse{
+  0%,100%{opacity:1}
+  50%{opacity:0.4}
+}
+
+.topbar-right{
+  display:flex;align-items:center;gap:8px;
+}
+
+.topbar-btn{
+  font-family:var(--mono);font-size:10px;
+  color:var(--white2);
+  background:var(--white4);
+  border:1px solid var(--gborder2);
+  padding:6px 14px;border-radius:6px;
+  cursor:pointer;letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  border-right:1px solid var(--gborder2);
+  background:rgba(6,9,18,0.4);
+  backdrop-filter:blur(20px);
+  padding:32px 24px;
+  display:flex;flex-direction:column;gap:8px;
+}
+
+.sidebar-label{
+  font-family:var(--mono);font-size:9px;
+  color:var(--white3);letter-spacing:0.16em;
+  text-transform:uppercase;margin-bottom:4px;
+  padding:0 8px;
+}
+
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:8px;
+  font-size:13px;font-weight:500;color:var(--white2);
+  cursor:pointer;transition:all 0.18s;
+  text-decoration:none;
+}
+
+.nav-item:hover{background:var(--white4);color:var(--white);}
+
+.nav-item.active{
+  background:linear-gradient(135deg,rgba(124,58,237,0.25),rgba(37,99,235,0.15));
+  border:1px solid rgba(124,58,237,0.3);
+  color:var(--white);
+}
+
+.nav-item svg{width:15px;height:15px;stroke:currentColor;fill:none;flex-shrink:0;}
+
+.sidebar-spacer{flex:1;}
+
+.sidebar-card{
+  background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(37,99,235,0.15));
+  border:1px solid rgba(124,58,237,0.25);
+  border-radius:12px;padding:16px;
+}
+
+.sc-title{font-size:12px;font-weight:600;margin-bottom:4px;}
+.sc-sub{font-size:11px;color:var(--white2);line-height:1.5;}
+
+/* ── MAIN ── */
+.main{
+  padding:36px 40px 60px;
+  overflow-y:auto;
+  display:flex;flex-direction:column;gap:28px;
+}
+
+/* ── HERO STRIP ── */
+.hero-strip{
+  background:var(--glass);
+  border:1px solid var(--gborder);
+  border-radius:20px;
+  padding:36px 40px;
+  backdrop-filter:blur(24px);
+  position:relative;overflow:hidden;
+}
+
+.hero-strip::before{
+  content:'';position:absolute;
+  top:-1px;left:60px;right:60px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(124,58,237,0.8),rgba(37,99,235,0.8),transparent);
+}
+
+.hero-strip::after{
+  content:'';position:absolute;
+  bottom:0;right:0;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(124,58,237,0.12),transparent 70%);
+  pointer-events:none;
+}
+
+.hero-top{
+  display:flex;align-items:flex-start;
+  justify-content:space-between;gap:24px;
+}
+
+.hero-kicker{
+  font-family:var(--mono);font-size:10px;
+  color:rgba(167,139,250,0.9);letter-spacing:0.14em;
+  text-transform:uppercase;margin-bottom:12px;
+}
+
+.hero-h{
+  font-size:clamp(28px,3.5vw,44px);
+  font-weight:700;letter-spacing:-0.03em;
+  line-height:1.1;color:#fff;
+}
+
+.hero-h span{
+  background:linear-gradient(135deg,#a78bfa,#60a5fa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.hero-sub{
+  margin-top:12px;font-size:14px;
+  font-weight:300;color:var(--white2);
+  line-height:1.7;max-width:420px;
+}
+
+.hero-stats{
+  display:flex;flex-direction:column;gap:0;
+  min-width:140px;
+}
+
+.hstat{
+  padding:10px 14px;
+  border-bottom:1px solid var(--gborder2);
+  text-align:right;
+}
+.hstat:last-child{border-bottom:none;}
+.hstat-val{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.02em;}
+.hstat-label{font-family:var(--mono);font-size:9px;color:var(--white3);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;}
+
+/* ── UPLOAD CARD ── */
+.upload-card{
+  background:var(--glass);
+  border:1px solid var(--gborder);
+  border-radius:20px;
+  backdrop-filter:blur(24px);
+  overflow:hidden;
+}
+
+.card-header{
+  padding:20px 28px;
+  border-bottom:1px solid var(--gborder2);
+  display:flex;align-items:center;gap:10px;
+}
+
+.card-header-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:linear-gradient(135deg,#7c3aed,#2563eb);
+  box-shadow:0 0 8px rgba(124,58,237,0.6);
+}
+
+.card-header-title{
+  font-size:12px;font-weight:600;
+  letter-spacing:0.02em;color:var(--white);
+}
+
+.card-header-tag{
+  margin-left:auto;
+  font-family:var(--mono);font-size:9px;
+  color:var(--white3);letter-spacing:0.08em;
+}
+
+.card-body{padding:28px;}
+
+.dropzone{
+  position:relative;
+  border:1.5px dashed var(--gborder);
+  border-radius:14px;
+  padding:48px 32px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.25s;
+  background:var(--white5);
+}
+
+.dropzone:hover{
+  border-color:rgba(124,58,237,0.6);
+  background:rgba(124,58,237,0.06);
+  box-shadow:inset 0 0 40px rgba(124,58,237,0.05), 0 0 0 1px rgba(124,58,237,0.3);
+}
+
+.dropzone input[type="file"]{
+  position:absolute;inset:0;opacity:0;
+  cursor:pointer;z-index:2;width:100%;height:100%;
+}
+
+.dz-orbit{
+  position:relative;width:64px;height:64px;
+  margin:0 auto 20px;
+}
+
+.dz-core{
+  position:absolute;inset:12px;
+  background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(37,99,235,0.3));
+  border:1px solid rgba(124,58,237,0.4);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  z-index:1;
+}
+
+.dz-core svg{width:20px;height:20px;stroke:#a78bfa;fill:none;}
+
+.dz-ring{
+  position:absolute;inset:0;
+  border:1px solid rgba(124,58,237,0.2);
+  border-radius:50%;
+  animation:spin 8s linear infinite;
+}
+
+.dz-ring::after{
+  content:'';position:absolute;
+  top:-3px;left:50%;transform:translateX(-50%);
+  width:6px;height:6px;border-radius:50%;
+  background:#7c3aed;
+  box-shadow:0 0 8px #7c3aed;
+}
+
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.dz-h{
+  font-size:16px;font-weight:600;
+  color:var(--white);margin-bottom:6px;
+  position:relative;z-index:1;
+}
+
+.dz-sub{
+  font-family:var(--mono);font-size:11px;
+  color:var(--white3);position:relative;z-index:1;
+}
+
+.card-footer{
+  padding:16px 28px;
+  border-top:1px solid var(--gborder2);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+
+.cfoot-hint{
+  font-family:var(--mono);font-size:10px;color:var(--white3);
+}
+
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  letter-spacing:0.01em;border:none;cursor:pointer;
+  transition:all 0.2s;border-radius:10px;padding:11px 24px;
+}
+
+.btn-glow{
+  background:linear-gradient(135deg,#7c3aed,#2563eb);
+  color:#fff;
+  box-shadow:0 4px 20px rgba(124,58,237,0.4);
+}
+
+.btn-glow:hover{
+  box-shadow:0 6px 28px rgba(124,58,237,0.6);
+  transform:translateY(-1px);
+}
+.btn-glow:active{transform:translateY(0);}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;}
+
+/* ── RESULTS ── */
+.results{
+  display:flex;flex-direction:column;gap:20px;
+  animation:fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* score row */
+.score-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:16px;
+}
+
+.scard{
+  background:var(--glass);
+  border:1px solid var(--gborder);
+  border-radius:16px;
+  backdrop-filter:blur(24px);
+  padding:24px;
+  position:relative;overflow:hidden;
+}
+
+.scard-label{
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--white3);margin-bottom:8px;
+}
+
+.scard-val{
+  font-size:36px;font-weight:700;
+  letter-spacing:-0.04em;color:#fff;line-height:1;
+}
+
+.scard-sub{
+  font-size:12px;color:var(--white2);margin-top:6px;
+  font-weight:400;
+}
+
+.scard-glow{
+  position:absolute;bottom:-20px;right:-20px;
+  width:100px;height:100px;border-radius:50%;
+  opacity:0.15;
+}
+
+.scard.score-main .scard-glow{background:radial-gradient(circle,#7c3aed,transparent);}
+.scard.score-lang .scard-glow{background:radial-gradient(circle,#2563eb,transparent);}
+.scard.score-syntax .scard-glow{background:radial-gradient(circle,#10b981,transparent);}
+
+.scard.syntax-fail .scard-glow{background:radial-gradient(circle,#f43f5e,transparent);}
+
+.score-bar{
+  margin-top:12px;height:3px;
+  background:var(--white4);border-radius:2px;overflow:hidden;
+}
+.score-bar-inner{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,#7c3aed,#2563eb);
+  transition:width 1s cubic-bezier(0.16,1,0.3,1);
+}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:0.06em;text-transform:uppercase;
+  padding:4px 10px;border-radius:5px;
+  border:1px solid;margin-top:8px;
+}
+.badge-ok{color:#10b981;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.1);}
+.badge-fail{color:#f43f5e;border-color:rgba(244,63,94,0.3);background:rgba(244,63,94,0.1);}
+.badge-ok::before{content:'●';font-size:7px;}
+.badge-fail::before{content:'●';font-size:7px;}
+
+/* panel cards */
+.panel-card{
+  background:var(--glass);
+  border:1px solid var(--gborder);
+  border-radius:20px;
+  backdrop-filter:blur(24px);
+  overflow:hidden;
+}
+
+.panel-card.two-col{
+  display:grid;grid-template-columns:1fr 1fr;
+}
+
+.panel-card.two-col .pcol{
+  padding:24px 26px;
+}
+
+.panel-card.two-col .pcol:first-child{
+  border-right:1px solid var(--gborder2);
+}
+
+.panel-card:not(.two-col) .pcol{
+  padding:24px 26px;
+}
+
+.pc-head{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:16px;padding-bottom:12px;
+  border-bottom:1px solid var(--gborder2);
+}
+
+.pc-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.pc-dot.v{background:#7c3aed;box-shadow:0 0 6px #7c3aed;}
+.pc-dot.b{background:#2563eb;box-shadow:0 0 6px #2563eb;}
+.pc-dot.g{background:#10b981;box-shadow:0 0 6px #10b981;}
+.pc-dot.a{background:#f59e0b;box-shadow:0 0 6px #f59e0b;}
+.pc-dot.r{background:#f43f5e;box-shadow:0 0 6px #f43f5e;}
+
+.pc-title{
+  font-size:11px;font-weight:600;
+  letter-spacing:0.04em;color:var(--white);
+}
+
+.pc-badge{
+  margin-left:auto;font-family:var(--mono);
+  font-size:9px;color:var(--white3);letter-spacing:0.06em;
+}
+
+pre{
+  font-family:var(--mono);font-size:11.5px;
+  line-height:1.75;color:var(--white2);
+  white-space:pre-wrap;word-break:break-word;
+  max-height:260px;overflow:auto;
+}
+
+pre::-webkit-scrollbar{width:3px;height:3px;}
+pre::-webkit-scrollbar-track{background:transparent;}
+pre::-webkit-scrollbar-thumb{background:var(--gborder);border-radius:2px;}
+
+pre.code{
+  background:rgba(0,0,0,0.4);
+  border:1px solid var(--gborder2);
+  border-radius:10px;padding:18px;
+  color:#e2e8f0;max-height:400px;
+  font-size:12px;
+}
+
+.issue-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+
+.issue-item{
+  font-family:var(--mono);font-size:11px;
+  color:var(--white2);padding:9px 12px;
+  background:rgba(245,158,11,0.06);
+  border:1px solid rgba(245,158,11,0.15);
+  border-radius:6px;line-height:1.5;
+  display:flex;gap:8px;align-items:flex-start;
+}
+
+.issue-item::before{
+  content:'⚠';font-size:10px;
+  color:#f59e0b;flex-shrink:0;margin-top:1px;
+}
+
+.no-issues{
+  font-family:var(--mono);font-size:11px;
+  color:var(--white3);text-align:center;
+  padding:20px;
+  border:1px dashed var(--gborder2);border-radius:8px;
+}
+.no-issues::before{content:'✓  ';color:#10b981;}
+
+.error-banner{
+  background:rgba(244,63,94,0.08);
+  border:1px solid rgba(244,63,94,0.25);
+  border-radius:20px;
+  padding:24px 28px;
+  backdrop-filter:blur(24px);
+}
+
+.eb-head{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:12px;
+}
+
+.eb-title{font-size:12px;font-weight:600;color:#f43f5e;}
+
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .score-row{grid-template-columns:1fr 1fr;}
+  .panel-card.two-col{grid-template-columns:1fr;}
+  .panel-card.two-col .pcol:first-child{border-right:none;border-bottom:1px solid var(--gborder2);}
+}
+
+@media(max-width:600px){
+  .main{padding:20px 16px 40px;}
+  .score-row{grid-template-columns:1fr;}
+  .hero-stats{display:none;}
+  .hero-strip{padding:24px 22px;}
+  .topbar-mid{display:none;}
+}
+
+/* ── TABS ── */
+.tab-page{display:none;flex-direction:column;gap:20px;animation:fadeUp 0.3s ease both;}
+.tab-page.active{display:flex;}
+
+.tab-hero{margin-bottom:4px;}
+.tab-hero-kicker{font-family:var(--mono);font-size:10px;color:rgba(167,139,250,0.9);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px;}
+.tab-hero-h{font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.03em;line-height:1.1;color:#fff;}
+.tab-hero-h span{background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.tab-hero-sub{margin-top:8px;font-size:13px;font-weight:300;color:var(--white2);line-height:1.6;}
+
+.empty-state{text-align:center;padding:40px 20px;}
+.empty-icon{font-size:28px;margin-bottom:12px;}
+.empty-title{font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px;}
+.empty-sub{font-size:12px;color:var(--white3);font-family:var(--mono);}
+
+.docs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.doc-p{font-size:13px;color:var(--white2);line-height:1.7;}
+.doc-p code{font-family:var(--mono);font-size:11px;background:var(--white4);padding:2px 6px;border-radius:4px;color:#a78bfa;}
+
+.hist-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;background:var(--white5);border:1px solid var(--gborder2);margin-bottom:8px;}
+.hist-score{font-size:22px;font-weight:700;color:#fff;width:44px;flex-shrink:0;text-align:center;}
+.hist-info{flex:1;}
+.hist-file{font-size:12px;font-weight:600;color:var(--white);}
+.hist-meta{font-family:var(--mono);font-size:10px;color:var(--white3);margin-top:2px;}
+.hist-badge{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid;flex-shrink:0;}
+
+.chart-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#7c3aed,#2563eb);min-height:4px;transition:height 0.6s cubic-bezier(0.16,1,0.3,1);}
+.chart-label{font-family:var(--mono);font-size:9px;color:var(--white3);}
+
+@media(max-width:700px){.docs-grid{grid-template-columns:1fr;}}
+
+/* ── DROPZONE FILE STATES ── */
+.dz-idle{pointer-events:none;}
+.dz-ready{
+  display:flex;flex-direction:column;
+  align-items:center;gap:6px;
+  pointer-events:none;
+  animation:fadeUp 0.25s ease;
+}
+.dz-file-icon svg{width:44px;height:44px;}
+.dz-file-name{
+  font-size:15px;font-weight:600;color:#fff;
+  max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.dz-file-meta{font-family:var(--mono);font-size:11px;color:var(--white3);}
+.dz-clear-btn{
+  pointer-events:all;
+  font-family:var(--mono);font-size:10px;
+  color:var(--red);background:rgba(244,63,94,0.1);
+  border:1px solid rgba(244,63,94,0.25);
+  padding:5px 12px;border-radius:6px;cursor:pointer;
+  margin-top:4px;letter-spacing:0.06em;
+  transition:all 0.15s;
+}
+.dz-clear-btn:hover{background:rgba(244,63,94,0.2);}
+.dropzone.has-file{
+  border-color:rgba(124,58,237,0.5);
+  background:rgba(124,58,237,0.07);
+  box-shadow:inset 0 0 40px rgba(124,58,237,0.06), 0 0 0 1px rgba(124,58,237,0.25);
+}
+</style>
+</head>
+<body>
+
+<div class="aurora">
+  <div class="aurora-blob blob1"></div>
+  <div class="aurora-blob blob2"></div>
+  <div class="aurora-blob blob3"></div>
+  <div class="aurora-blob blob4"></div>
+</div>
+
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <a class="logo" href="#">
+      <div class="logo-icon">
+        <svg viewBox="0 0 18 18"><path d="M3 5l5 4-5 4M10 13h5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="logo-name">Prism</span>
+    </a>
+    <div class="topbar-mid">
+      <div class="topbar-pill">
+        <span class="pulse"></span>
+        AI Review Engine Active
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn">Python</button>
+      <button class="topbar-btn">v2.0</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Navigation</div>
+    <a class="nav-item active" href="#" data-tab="review">
+      <svg viewBox="0 0 16 16"><path d="M2 3h12M2 8h8M2 13h10" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Review
+    </a>
+    <a class="nav-item" href="#" data-tab="history">
+      <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2" stroke-width="1.5"/><path d="M5 8h6M5 5h3M5 11h4" stroke-width="1.3" stroke-linecap="round"/></svg>
+      History
+    </a>
+    <a class="nav-item" href="#" data-tab="reports">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Reports
+    </a>
+    <a class="nav-item" href="#" data-tab="docs">
+      <svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 100 12A6 6 0 008 2zM8 7v4" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="5.5" r="0.75" fill="currentColor"/></svg>
+      Docs
+    </a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-card">
+      <div class="sc-title">Python AST + LLM</div>
+      <div class="sc-sub">Powered by static analysis and large language models for deep code insight.</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-area">
+
+    <!-- TAB: REVIEW -->
+    <div class="tab-page active" id="tab-review">
+
+    <!-- HERO STRIP -->
+    <div class="hero-strip">
+      <div class="hero-top">
+        <div>
+          <div class="hero-kicker">// code quality engine</div>
+          <div class="hero-h">Instant <span>code review</span><br>powered by AI</div>
+          <p class="hero-sub">Upload a Python file. Get syntax analysis, structural breakdown, rule violations, and AI feedback — all in seconds.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat"><div class="hstat-val">AST</div><div class="hstat-label">Parser</div></div>
+          <div class="hstat"><div class="hstat-val">LLM</div><div class="hstat-label">Feedback</div></div>
+          <div class="hstat"><div class="hstat-val">100</div><div class="hstat-label">Max score</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="upload-card">
+      <div class="card-header">
+        <div class="card-header-dot"></div>
+        <span class="card-header-title">Upload File</span>
+        <span class="card-header-tag">Step 01</span>
+      </div>
+      <div class="card-body">
+        <form action="/review" method="post" enctype="multipart/form-data">
+          <div class="dropzone" id="dropzone">
+            <input type="file" name="file" required accept=".py" id="file-input">
+            <!-- idle state -->
+            <div class="dz-idle" id="dz-idle">
+              <div class="dz-orbit">
+                <div class="dz-ring"></div>
+                <div class="dz-core">
+                  <svg viewBox="0 0 20 20"><path d="M10 14V5M10 5L7 8M10 5l3 3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v1.5A1.5 1.5 0 005.5 18h9a1.5 1.5 0 001.5-1.5V15" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </div>
+              </div>
+              <div class="dz-h">Drop your Python file here</div>
+              <div class="dz-sub">or click to browse · .py files only</div>
+            </div>
+            <!-- file selected state -->
+            <div class="dz-ready" id="dz-ready" style="display:none">
+              <div class="dz-file-icon">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14 2 14 8 20 8" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="dz-file-name" id="dz-file-name">filename.py</div>
+              <div class="dz-file-meta" id="dz-file-meta">0 KB · Python</div>
+              <button type="button" class="dz-clear-btn" id="dz-clear-btn" title="Remove file">✕ Remove</button>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="cfoot-hint">Max size: 1MB · Python only</span>
+            <button type="submit" class="btn btn-glow">
+              <svg viewBox="0 0 14 14"><path d="M2 7h10M9 4l3 3-3 3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Run Analysis
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if result %}
+    <span hidden data-result-score="{{ result.overall_score }}" data-result-file="{{ result.filename }}" data-result-lang="{{ result.language }}" data-result-syntax="{{ result.syntax_valid | lower }}"></span>
+    <div class="results">
+
+      <!-- SCORE ROW -->
+      <div class="score-row">
+        <div class="scard score-main">
+          <div class="scard-label">Overall Score</div>
+          <div class="scard-val">{{ result.overall_score }}</div>
+          <div class="scard-sub">out of 100</div>
+          <div class="score-bar"><div class="score-bar-inner" style="width:{{ result.overall_score }}%"></div></div>
+          <div class="scard-glow"></div>
+        </div>
+        <div class="scard score-lang">
+          <div class="scard-label">Language</div>
+          <div class="scard-val" style="font-size:24px;">{{ result.language }}</div>
+          <div class="scard-sub">{{ result.filename }}</div>
+          <div class="scard-glow"></div>
+        </div>
+        <div class="scard score-syntax {% if not result.syntax_valid %}syntax-fail{% endif %}">
+          <div class="scard-label">Syntax Check</div>
+          <div class="scard-val" style="font-size:20px;margin-top:4px;">
+            {% if result.syntax_valid %}Passed{% else %}Failed{% endif %}
+          </div>
+          {% if result.syntax_valid %}
+            <div class="badge badge-ok">Valid</div>
+          {% else %}
+            <div class="badge badge-fail">Error found</div>
+          {% endif %}
+          <div class="scard-glow"></div>
+        </div>
+      </div>
+
+      {% if result.syntax_error %}
+      <div class="error-banner">
+        <div class="eb-head">
+          <div class="pc-dot r"></div>
+          <span class="eb-title">Syntax Error Detected</span>
+        </div>
+        <pre>{{ result.syntax_error }}</pre>
+      </div>
+      {% endif %}
+
+      <!-- AST + ISSUES -->
+      <div class="panel-card two-col">
+        <div class="pcol">
+          <div class="pc-head">
+            <div class="pc-dot v"></div>
+            <span class="pc-title">AST Summary</span>
+            <span class="pc-badge">structural</span>
+          </div>
+          <pre>{{ result.ast_summary }}</pre>
+        </div>
+        <div class="pcol">
+          <div class="pc-head">
+            <div class="pc-dot a"></div>
+            <span class="pc-title">Rule Issues</span>
+            <span class="pc-badge">lint</span>
+          </div>
+          {% if result.rule_issues %}
+            <ul class="issue-list">
+              {% for issue in result.rule_issues %}
+                <li class="issue-item">{{ issue }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="no-issues">No violations found</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- LLM FEEDBACK -->
+      <div class="panel-card">
+        <div class="pcol">
+          <div class="pc-head">
+            <div class="pc-dot g"></div>
+            <span class="pc-title">LLM Feedback</span>
+            <span class="pc-badge">ai-generated</span>
+          </div>
+          <pre>{{ result.llm_feedback }}</pre>
+        </div>
+      </div>
+
+      <!-- CODE -->
+      <div class="panel-card">
+        <div class="pcol">
+          <div class="pc-head">
+            <div class="pc-dot b"></div>
+            <span class="pc-title">Uploaded Code</span>
+            <span class="pc-badge">source</span>
+          </div>
+          <pre class="code">{{ code }}</pre>
+        </div>
+      </div>
+
+    </div>
+    {% endif %}
+
+    </div><!-- /tab-review -->
+
+    <!-- TAB: HISTORY -->
+    <div class="tab-page" id="tab-history">
+      <div class="tab-hero">
+        <div class="tab-hero-kicker">// session log</div>
+        <div class="tab-hero-h">Review <span>History</span></div>
+        <p class="tab-hero-sub">All your past code reviews from this session.</p>
+      </div>
+      <div class="history-table-wrap panel-card">
+        <div class="pcol">
+          <div class="pc-head">
+            <div class="pc-dot v"></div>
+            <span class="pc-title">Recent Reviews</span>
+            <span class="pc-badge">session</span>
+          </div>
+          <div id="history-list">
+            <div class="empty-state">
+              <div class="empty-icon">⏳</div>
+              <div class="empty-title">No reviews yet</div>
+              <div class="empty-sub">Run your first code review to see it appear here.</div>
+              <button class="btn btn-glow" style="margin-top:16px" onclick="switchTab('review')">
+                <svg viewBox="0 0 14 14" style="width:13px;height:13px;stroke:currentColor;fill:none"><path d="M2 7h10M9 4l3 3-3 3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Go to Review
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-history -->
+
+    <!-- TAB: REPORTS -->
+    <div class="tab-page" id="tab-reports">
+      <div class="tab-hero">
+        <div class="tab-hero-kicker">// analytics</div>
+        <div class="tab-hero-h">Quality <span>Reports</span></div>
+        <p class="tab-hero-sub">Score breakdowns and quality metrics across your reviews.</p>
+      </div>
+      <div class="score-row" style="margin-bottom:20px">
+        <div class="scard score-main">
+          <div class="scard-label">Avg. Score</div>
+          <div class="scard-val" id="rpt-avg">—</div>
+          <div class="scard-sub">across all reviews</div>
+          <div class="score-bar"><div class="score-bar-inner" id="rpt-avg-bar" style="width:0%"></div></div>
+          <div class="scard-glow"></div>
+        </div>
+        <div class="scard score-lang">
+          <div class="scard-label">Total Reviews</div>
+          <div class="scard-val" id="rpt-count">0</div>
+          <div class="scard-sub">files analysed</div>
+          <div class="scard-glow"></div>
+        </div>
+        <div class="scard score-syntax">
+          <div class="scard-label">Pass Rate</div>
+          <div class="scard-val" id="rpt-pass">—</div>
+          <div class="scard-sub">syntax valid</div>
+          <div class="scard-glow"></div>
+        </div>
+      </div>
+      <div class="panel-card">
+        <div class="pcol">
+          <div class="pc-head">
+            <div class="pc-dot b"></div>
+            <span class="pc-title">Score Timeline</span>
+            <span class="pc-badge">chart</span>
+          </div>
+          <div id="rpt-chart" style="min-height:120px;display:flex;align-items:flex-end;gap:8px;padding-top:12px;">
+            <div class="empty-state" style="width:100%">
+              <div class="empty-icon">📊</div>
+              <div class="empty-title">No data yet</div>
+              <div class="empty-sub">Complete at least one review to generate a report.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-reports -->
+
+    <!-- TAB: DOCS -->
+    <div class="tab-page" id="tab-docs">
+      <div class="tab-hero">
+        <div class="tab-hero-kicker">// documentation</div>
+        <div class="tab-hero-h">How <span>it works</span></div>
+        <p class="tab-hero-sub">Learn about the analysis pipeline and scoring system.</p>
+      </div>
+      <div class="docs-grid">
+        <div class="panel-card">
+          <div class="pcol">
+            <div class="pc-head"><div class="pc-dot v"></div><span class="pc-title">Step 1 — Upload</span></div>
+            <p class="doc-p">Upload any <code>.py</code> Python file using the Review tab. Files are processed server-side and never stored permanently.</p>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="pcol">
+            <div class="pc-head"><div class="pc-dot b"></div><span class="pc-title">Step 2 — Syntax Check</span></div>
+            <p class="doc-p">The file is parsed using Python's built-in <code>ast</code> module. If parsing fails, a syntax error is reported with the exact line and message.</p>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="pcol">
+            <div class="pc-head"><div class="pc-dot a"></div><span class="pc-title">Step 3 — AST Analysis</span></div>
+            <p class="doc-p">A full Abstract Syntax Tree is walked to extract classes, functions, imports, and structural metrics like nesting depth and complexity.</p>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="pcol">
+            <div class="pc-head"><div class="pc-dot g"></div><span class="pc-title">Step 4 — Rule Check</span></div>
+            <p class="doc-p">Static lint rules are applied to detect common issues — missing docstrings, unused variables, overly long functions, and naming conventions.</p>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="pcol">
+            <div class="pc-head"><div class="pc-dot r"></div><span class="pc-title">Step 5 — LLM Feedback</span></div>
+            <p class="doc-p">The code and analysis results are sent to a large language model which generates human-readable feedback, suggestions, and improvement tips.</p>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="pcol">
+            <div class="pc-head"><div class="pc-dot v"></div><span class="pc-title">Step 6 — Scoring</span></div>
+            <p class="doc-p">A final score out of 100 is calculated from syntax validity (30%), rule compliance (30%), structural quality (20%), and LLM sentiment (20%).</p>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-docs -->
+
+  </main>
+
+</div>
+
+
+<script>
+const reviews = [];
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('tab-' + name);
+  if (page) page.classList.add('active');
+  const nav = document.querySelector('[data-tab="' + name + '"]');
+  if (nav) nav.classList.add('active');
+  if (name === 'reports') renderReports();
+  if (name === 'history') renderHistory();
+}
+
+document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    switchTab(el.dataset.tab);
+  });
+});
+
+(function(){
+  const scoreEl = document.querySelector('[data-result-score]');
+  if (scoreEl) {
+    reviews.push({
+      score: parseInt(scoreEl.dataset.resultScore),
+      file:  scoreEl.dataset.resultFile || 'unknown.py',
+      lang:  scoreEl.dataset.resultLang || 'Python',
+      valid: scoreEl.dataset.resultSyntax === 'true',
+      time:  new Date().toLocaleTimeString()
+    });
+  }
+})();
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!list) return;
+  if (!reviews.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">No reviews yet</div><div class="empty-sub">Run your first code review to see it appear here.</div><button class="btn btn-glow" style="margin-top:16px" onclick="switchTab('review')">Go to Review</button></div>`;
+    return;
+  }
+  list.innerHTML = reviews.slice().reverse().map((r,i) => `
+    <div class="hist-row">
+      <div class="hist-score">${r.score}</div>
+      <div class="hist-info">
+        <div class="hist-file">${r.file}</div>
+        <div class="hist-meta">${r.lang} · ${r.time}</div>
+      </div>
+      <span class="hist-badge ${r.valid ? 'badge-ok' : 'badge-fail'}">${r.valid ? 'Valid' : 'Error'}</span>
+    </div>
+  `).join('');
+}
+
+function renderReports() {
+  if (!reviews.length) return;
+  const avg = Math.round(reviews.reduce((s,r) => s+r.score, 0) / reviews.length);
+  const passRate = Math.round((reviews.filter(r => r.valid).length / reviews.length) * 100);
+  const avgEl = document.getElementById('rpt-avg');
+  const cntEl = document.getElementById('rpt-count');
+  const passEl = document.getElementById('rpt-pass');
+  const barEl = document.getElementById('rpt-avg-bar');
+  if (avgEl) avgEl.textContent = avg;
+  if (cntEl) cntEl.textContent = reviews.length;
+  if (passEl) passEl.textContent = passRate + '%';
+  if (barEl) barEl.style.width = avg + '%';
+  const chart = document.getElementById('rpt-chart');
+  if (chart) {
+    chart.innerHTML = reviews.map((r,i) => `
+      <div class="chart-bar-wrap">
+        <div class="chart-bar" style="height:${Math.round((r.score/100)*100)}px"></div>
+        <div class="chart-label">#${i+1}</div>
+      </div>
+    `).join('');
+  }
+}
+
+// ── FILE INPUT DISPLAY ──
+const fileInput = document.getElementById('file-input');
+const dzIdle    = document.getElementById('dz-idle');
+const dzReady   = document.getElementById('dz-ready');
+const dzName    = document.getElementById('dz-file-name');
+const dzMeta    = document.getElementById('dz-file-meta');
+const dzClear   = document.getElementById('dz-clear-btn');
+const dropzone  = document.getElementById('dropzone');
+
+function formatBytes(b){
+  if(b < 1024) return b + ' B';
+  if(b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function showFile(file){
+  dzName.textContent = file.name;
+  dzMeta.textContent = formatBytes(file.size) + ' · Python';
+  dzIdle.style.display = 'none';
+  dzReady.style.display = 'flex';
+  dropzone.classList.add('has-file');
+}
+
+function clearFile(){
+  fileInput.value = '';
+  dzIdle.style.display = '';
+  dzReady.style.display = 'none';
+  dropzone.classList.remove('has-file');
+}
+
+if(fileInput){
+  fileInput.addEventListener('change', () => {
+    if(fileInput.files.length) showFile(fileInput.files[0]);
+    else clearFile();
+  });
+}
+
+if(dzClear){
+  dzClear.addEventListener('click', e => {
+    e.stopPropagation();
+    clearFile();
+  });
+}
+
+// drag-over highlight
+if(dropzone){
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'rgba(124,58,237,0.7)';
+  });
+  dropzone.addEventListener('dragleave', () => {
+    if(!dropzone.classList.contains('has-file'))
+      dropzone.style.borderColor = '';
+  });
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if(file){
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      showFile(file);
+    }
+  });
+}
+
+</script>
+</body>
+</html>
