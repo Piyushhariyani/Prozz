@@ -1,4 +1,5 @@
 import ast
+import re
 from typing import List
 
 
@@ -87,6 +88,50 @@ def run_python_rules(code: str) -> List[str]:
     for idx, line in enumerate(lines, start=1):
         if len(line) > 100:
             issues.append(f"Line {idx} is too long ({len(line)} chars).")
+
+    if not issues:
+        issues.append("No major rule-based issues detected.")
+
+    return issues
+
+
+GENERIC_DEBUG_PATTERNS = {
+    "javascript": "console.log(",
+    "typescript": "console.log(",
+    "java": "System.out.println(",
+    "go": "fmt.Println(",
+    "cpp": "std::cout",
+    "c": "printf(",
+}
+
+
+def run_generic_rules(code: str, language: str) -> List[str]:
+    issues = []
+    lines = code.splitlines()
+    debug_pattern = GENERIC_DEBUG_PATTERNS.get(language)
+
+    if len(lines) > 400:
+        issues.append("File is too long. Consider splitting the logic into smaller modules.")
+
+    long_lines = [idx for idx, line in enumerate(lines, start=1) if len(line) > 120]
+    for idx in long_lines[:10]:
+        issues.append(f"Line {idx} is too long ({len(lines[idx - 1])} chars).")
+
+    todo_count = len(re.findall(r"\b(TODO|FIXME|HACK)\b", code))
+    if todo_count:
+        issues.append(f"Found {todo_count} unfinished TODO/FIXME markers.")
+
+    if "\t" in code:
+        issues.append("Tab indentation detected. Prefer consistent spaces for readability.")
+
+    if debug_pattern and code.count(debug_pattern) > 3:
+        issues.append("Too many debug output statements found. Consider structured logging.")
+
+    if re.search(r"\beval\s*\(", code):
+        issues.append("Potentially unsafe dynamic evaluation detected.")
+
+    if re.search(r"(password|secret|token)\s*=", code, flags=re.IGNORECASE):
+        issues.append("Possible hardcoded secret detected. Move secrets to environment variables.")
 
     if not issues:
         issues.append("No major rule-based issues detected.")
